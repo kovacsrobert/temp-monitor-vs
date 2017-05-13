@@ -1,0 +1,5 @@
+Steps:
+- read MCP9808 temperature data and write to serial
+- connect to WPA2-ENT
+- write temperature data to blynk
+- write temperature data to mqtt
