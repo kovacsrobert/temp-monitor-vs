@@ -1,5 +1,9 @@
-Steps:
-- read MCP9808 temperature data and write to serial
-- connect to WPA2-ENT
-- write temperature data to blynk
-- write temperature data to mqtt
+Todo:
+	- connect to WPA2-ENT
+	- write temperature data to blynk
+	- write temperature data to mqtt
+
+Done:
+	+ read MCP9808 temperature data and write to serial
+		MCP9808 tutorial: https://learn.adafruit.com/adafruit-mcp9808-precision-i2c-temperature-sensor-guide/wiring
+		NodeMCU I2C pin layout: http://www.14core.com/wp-content/uploads/2016/01/NodeMCU-LCD-Screen-i2c-16x2-Display.jpg
