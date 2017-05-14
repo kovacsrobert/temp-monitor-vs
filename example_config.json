@@ -1,0 +1,8 @@
+// should place in /data folder to upload from IDE
+{
+	"ssid" : "",
+	"pass" : "",
+	"blynk_token" : "",
+	"mqtt_server" : "",
+	"mqtt_port" : ""
+}

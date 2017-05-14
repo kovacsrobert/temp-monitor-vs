@@ -1,7 +1,8 @@
 Todo:
-	- connect to WPA2-ENT
-	- write temperature data to blynk
+	- add json config handling
+	- connect to WPA2-PSK
 	- write temperature data to mqtt
+	- upgrade connection to WPA2-ENT
 
 Done:
 	+ read MCP9808 temperature data and write to serial
