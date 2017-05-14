@@ -4,19 +4,23 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
+const char* configFilePath = "/config.json";
+
 Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
+JsonObject* config;
 
 void setup()
 {
 	Serial.begin(9600);
 	setupTempSensor();
 	setupFileSystem();
+	setupConfig();
+	setupWifi();
 }
 
 void loop()
 {
 	readTemperatureInCelsius();
-	loadConfig("/config.json");
 	delay(1000);
 }
 
@@ -34,23 +38,33 @@ float readTemperatureInCelsius() {
 }
 
 void setupWifi() {
-	/*Wifi.begin(ssid, pass);
+	JsonObject& json = *config;
+	const char* ssid = json["ssid"];
+	const char* pass = json["pass"];
+	WiFi.begin(ssid, pass);
 	while (WiFi.status() != WL_CONNECTED) {
-		Serial.print("Connecting to Wifi, SSID: ");
-		Serial.print(ssid);
-		Serial.print(", PASS: ");
-		Serial.println(pass);
+		/*Serial.print("Connecting to Wifi, SSID: "); Serial.print(ssid); Serial.print(", PASS: "); Serial.println(pass);*/
+		Serial.print("Connecting to Wifi...");
 		delay(1000);
-	}*/
+	}
+	Serial.println("Connected to Wifi");
 }
 
 void setupFileSystem() {
-	Serial.println("mounting FS...");
+	Serial.println("Mounting file system...");
 	if (!SPIFFS.begin()) {
-		Serial.println("Cannot mount FS!");
+		Serial.println("Cannot mount file system!");
 		while (1);
 	}
 	Serial.println("Mounted file system");
+}
+
+void setupConfig() {
+	if (!loadConfig(configFilePath)) {
+		Serial.println("Failed to load configuration!");
+		while (1);
+	}
+	Serial.println("Configuration loaded");
 }
 
 boolean loadConfig(const char* filePath) {
@@ -70,16 +84,13 @@ boolean loadConfig(const char* filePath) {
 	std::unique_ptr<char[]> buf(new char[size]);
 	configFile.readBytes(buf.get(), size);
 	DynamicJsonBuffer jsonBuffer;
-	JsonObject& json = jsonBuffer.parseObject(buf.get());
+	config = &jsonBuffer.parseObject(buf.get());
 
-	if (!json.success()) {
+	if (!config->success()) {
 		Serial.println("Failed parsing config json");
+		config = NULL;
 		return false;
 	}
-	
-	Serial.println("Parsed config json");
-	const char* ssid = json["ssid"];
-	Serial.print("SSID: "); Serial.println(ssid);
 
 	return true;
 }
