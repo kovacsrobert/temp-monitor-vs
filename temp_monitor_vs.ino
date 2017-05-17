@@ -3,14 +3,15 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 #include <ArduinoJson.h>
+#include <ESP8266HTTPClient.h>
 
 const char* configFilePath = "/config.json";
 
 Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
 JsonObject* config;
 
-void setup()
-{
+
+void setup() {
 	Serial.begin(9600);
 	setupTempSensor();
 	setupFileSystem();
@@ -18,10 +19,56 @@ void setup()
 	setupWifi();
 }
 
-void loop()
-{
-	readTemperatureInCelsius();
+void loop() {
+	//readTemperatureInCelsius();
+	//getExample();
+	postExample();
 	delay(1000);
+}
+
+void postExample() {
+	HTTPClient http;
+	Serial.printf("sending POST request..\n");
+	http.begin("http://httpbin.org/post");
+	int httpCode = http.POST("test");
+	if (httpCode > 0) {
+		if (httpCode == HTTP_CODE_OK) {
+			Serial.print("POST response: ");
+			Serial.println(http.getString());
+		}
+		else {
+			Serial.printf("failed POST request, with code: %d\n", httpCode);
+		}
+	}
+	else {
+		Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+		Serial.printf("error: %s\n", httpCode);
+	}
+	http.end();
+	Serial.printf("ended POST request\n");
+}
+
+void getExample() {
+	HTTPClient http;
+	String payload;
+	Serial.printf("sending GET request..\n");
+	http.begin("http://httpbin.org/ip");
+	int httpCode = http.GET();
+	if (httpCode > 0) {
+		if (httpCode == HTTP_CODE_OK) {
+			payload = http.getString();
+			Serial.println(payload);
+		}
+		else {
+			Serial.printf("failed GET request, with code: %d\n", httpCode);
+		}
+	}
+	else {
+		Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+		Serial.printf("error: %s\n", httpCode);
+	}
+	http.end();
+	Serial.printf("ended GET request\n");
 }
 
 void setupTempSensor() {
@@ -44,7 +91,7 @@ void setupWifi() {
 	WiFi.begin(ssid, pass);
 	while (WiFi.status() != WL_CONNECTED) {
 		/*Serial.print("Connecting to Wifi, SSID: "); Serial.print(ssid); Serial.print(", PASS: "); Serial.println(pass);*/
-		Serial.print("Connecting to Wifi...");
+		Serial.println("Connecting to Wifi...");
 		delay(1000);
 	}
 	Serial.println("Connected to Wifi");
