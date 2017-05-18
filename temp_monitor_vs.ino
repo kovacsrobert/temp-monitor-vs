@@ -30,10 +30,15 @@ void setup() {
 
 void loop() {
 	//readTemperatureInCelsius();
+
 	//getExample();
 	//postExample();
+
 	postConfigurableRequest();
-	delay(1000);
+	delay(2000);
+
+	getExample();
+	delay(2000);
 }
 
 void postConfigurableRequest() {
