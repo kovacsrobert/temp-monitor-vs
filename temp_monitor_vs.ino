@@ -13,7 +13,7 @@ JsonObject* config;
 
 void setup() {
 	Serial.begin(9600);
-	setupTempSensor();
+	//setupTempSensor();
 	setupFileSystem();
 	setupConfig();
 	setupWifi();
@@ -22,8 +22,41 @@ void setup() {
 void loop() {
 	//readTemperatureInCelsius();
 	//getExample();
-	postExample();
+	postConfigurableRequest();
 	delay(1000);
+}
+
+void postConfigurableRequest() {
+	JsonObject& json = *config;
+	const char* url = json["url"];
+	const char* origin = json["origin"];
+	const char* contentLength = json["content-length"];
+	const char* contentType = json["content-type"];
+	const char* data = json["data"];
+	HTTPClient http;
+	Serial.printf("sending POST request..\n");
+	http.begin(url);
+	//http.addHeader("Host", "wifi.epam.com");
+	http.addHeader("Origin", origin);
+	http.addHeader("Content-Length", contentLength);
+	http.addHeader("Content-Type", contentType);
+	int httpCode = http.POST(data);
+	if (httpCode > 0) {
+		if (httpCode == HTTP_CODE_OK) {
+			Serial.print("POST response: ");
+			Serial.println(http.getString());
+		}
+		else {
+			Serial.printf("failed POST request, with code: %d\n", httpCode);
+			Serial.println(http.getString());
+		}
+	}
+	else {
+		Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+		Serial.printf("error: %s\n", httpCode);
+	}
+	http.end();
+	Serial.printf("ended POST request\n");
 }
 
 void postExample() {
