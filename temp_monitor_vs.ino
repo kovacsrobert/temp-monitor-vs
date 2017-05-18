@@ -8,8 +8,17 @@
 const char* configFilePath = "/config.json";
 
 Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
-JsonObject* config;
 
+// Wifi data
+char* ssid;
+char* pass;
+
+// POST data
+char* url;
+char* origin;
+char* contentLength;
+char* contentType;
+char* data;
 
 void setup() {
 	Serial.begin(9600);
@@ -22,25 +31,26 @@ void setup() {
 void loop() {
 	//readTemperatureInCelsius();
 	//getExample();
+	//postExample();
 	postConfigurableRequest();
 	delay(1000);
 }
 
 void postConfigurableRequest() {
-	JsonObject& json = *config;
-	const char* url = json["url"];
-	const char* origin = json["origin"];
-	const char* contentLength = json["content-length"];
-	const char* contentType = json["content-type"];
-	const char* data = json["data"];
 	HTTPClient http;
 	Serial.printf("sending POST request..\n");
 	http.begin(url);
-	//http.addHeader("Host", "wifi.epam.com");
 	http.addHeader("Origin", origin);
 	http.addHeader("Content-Length", contentLength);
 	http.addHeader("Content-Type", contentType);
 	int httpCode = http.POST(data);
+
+	Serial.printf("url: %s\n", url);
+	Serial.printf("origin: %s\n", origin);
+	Serial.printf("contentLength: %s\n", contentLength);
+	Serial.printf("contentType: %s\n", contentType);
+	Serial.printf("data: %s\n", data);
+
 	if (httpCode > 0) {
 		if (httpCode == HTTP_CODE_OK) {
 			Serial.print("POST response: ");
@@ -52,8 +62,7 @@ void postConfigurableRequest() {
 		}
 	}
 	else {
-		Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
-		Serial.printf("error: %s\n", httpCode);
+		Serial.printf("[HTTP] POST... failed, httpCode: %s, error: %s\n", httpCode, http.errorToString(httpCode).c_str());
 	}
 	http.end();
 	Serial.printf("ended POST request\n");
@@ -63,6 +72,9 @@ void postExample() {
 	HTTPClient http;
 	Serial.printf("sending POST request..\n");
 	http.begin("http://httpbin.org/post");
+	http.addHeader("Origin", "httpbin.org");
+	http.addHeader("Content-Length", "10");
+	http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 	int httpCode = http.POST("test");
 	if (httpCode > 0) {
 		if (httpCode == HTTP_CODE_OK) {
@@ -118,12 +130,9 @@ float readTemperatureInCelsius() {
 }
 
 void setupWifi() {
-	JsonObject& json = *config;
-	const char* ssid = json["ssid"];
-	const char* pass = json["pass"];
 	WiFi.begin(ssid, pass);
 	while (WiFi.status() != WL_CONNECTED) {
-		/*Serial.print("Connecting to Wifi, SSID: "); Serial.print(ssid); Serial.print(", PASS: "); Serial.println(pass);*/
+		Serial.print("Connecting to Wifi, SSID: "); Serial.print(ssid); Serial.print(", PASS: "); Serial.println(pass);
 		Serial.println("Connecting to Wifi...");
 		delay(1000);
 	}
@@ -164,13 +173,31 @@ boolean loadConfig(const char* filePath) {
 	std::unique_ptr<char[]> buf(new char[size]);
 	configFile.readBytes(buf.get(), size);
 	DynamicJsonBuffer jsonBuffer;
-	config = &jsonBuffer.parseObject(buf.get());
+	JsonObject& json = jsonBuffer.parseObject(buf.get());
+	json.prettyPrintTo(Serial);
+	Serial.println("");
 
-	if (!config->success()) {
+	if (!json.success()) {
 		Serial.println("Failed parsing config json");
-		config = NULL;
 		return false;
 	}
 
+	Serial.println("Config file parsed");
+
+	ssid = copyJsonProperty(ssid, json["ssid"]);
+	pass = copyJsonProperty(pass, json["pass"]);
+	url = copyJsonProperty(url, json["url"]);
+	origin = copyJsonProperty(origin, json["origin"]);
+	contentLength = copyJsonProperty(contentLength, json["content-length"]);
+	contentType = copyJsonProperty(contentType, json["content-type"]);
+	data = copyJsonProperty(data, json["data"]);
+
+	Serial.println("Config file content copy done");
+
 	return true;
+}
+
+char* copyJsonProperty(char* unAllocatedTarget, const char* source) {
+	unAllocatedTarget = (char*)malloc(strlen(source) * sizeof(char));
+	return strcpy(unAllocatedTarget, source);
 }
